@@ -8,9 +8,9 @@ from math import *
 
 if __name__ == '__main__':
     try:
-        # ControlModel(1, 1).run()
+        #ControlModel(1, 1).run()
 
-        points = [ (1,1,pi/2), (2,2,-pi), (-1,1,-pi/2), (0,0,0)]
+        points = [ (11,0,0), (11,1.5,pi/2), (14,9,pi/2), (14,9,-pi/2), (14,1.5,-pi/2),(11,0,pi),(0,0,pi)]
 
         s = PathFollowing(points)
         s.run()

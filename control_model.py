@@ -26,8 +26,8 @@ class ControlModel:
     self.w = None
 
     rospy.init_node('p3at_node', anonymous=True)
-    rospy.Subscriber('/RosAria/pose', Odometry, self.odometry_callback)
-    self.pub = rospy.Publisher('/RosAria/cmd_vel', Twist, queue_size=10)
+    rospy.Subscriber('/sim_p3at/odom', Odometry, self.odometry_callback)
+    self.pub = rospy.Publisher('/sim_p3at/cmd_vel', Twist, queue_size=10)
 
   def get_yaw(self, odom_data):
         orientation = odom_data.pose.pose.orientation
@@ -63,7 +63,7 @@ class ControlModel:
   def refresh_position(self):
     self.err_x = self.x_p - self.x;
     self.err_y = self.y_p - self.y;
-    # rospy.loginfo('Erro de Posicao \n%s', [err_x, err_y])
+    rospy.loginfo('Erro de Posicao \n%s', [self.err_x, self.err_y])
 
     x_m = (cos(self.theta)*self.err_x + sin(self.theta)*self.err_y);
     y_m = (-sin(self.theta)*self.err_x + cos(self.theta)*self.err_y);      
