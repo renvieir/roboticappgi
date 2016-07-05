@@ -23,5 +23,5 @@ def odometry_callback(odom_data):
   rospy.loginfo('x, y, theta: \n%s', [x, y, theta])
 
 rospy.init_node('p3at_node', anonymous=True)
-rospy.Subscriber('/sim_p3at/odom', Odometry, odometry_callback)
+rospy.Subscriber('/RosAria/pose', Odometry, odometry_callback)
 rospy.spin()

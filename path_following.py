@@ -12,11 +12,13 @@ class PathFollowing(Sordalane):
         self.points = points
 
     def run(self):
-        for p in self.points:
-            (self.x_p, self.y_p, self.theta_p) = p        
-            while not rospy.is_shutdown():
-                self.refresh_position()
-                self.publish_velocities()
+        i = 0
+        (self.x_p, self.y_p, self.theta_p) = self.points[i]        
+        while not rospy.is_shutdown():
+            self.refresh_position()
+            self.publish_velocities()
 
-            if fabs(self.err_x) < 0.02 and fabs(self.err_y) < 0.02:
-                break
+            if len(self.points) > i and (fabs(self.err_x) < 0.02 and fabs(self.err_y) < 0.02):
+                i+=1
+                print self.points[i], self.err_x, self.err_y
+                (self.x_p, self.y_p, self.theta_p) = self.points[i]

@@ -10,7 +10,7 @@ if __name__ == '__main__':
     try:
         #ControlModel(1, 1).run()
 
-        points = [ (11,0,0), (11,1.5,pi/2), (14,9,pi/2), (14,9,-pi/2), (14,1.5,-pi/2),(11,0,pi),(0,0,pi)]
+        points = [ (12,0,0), (14,1.5,pi/2), (14,9,pi/2), (14,9,-pi/2), (14,1.5,-pi/2),(12,0,pi),(0,0,pi)]
 
         s = PathFollowing(points)
         s.run()

@@ -26,8 +26,10 @@ class ControlModel:
     self.w = None
 
     rospy.init_node('p3at_node', anonymous=True)
-    rospy.Subscriber('/sim_p3at/odom', Odometry, self.odometry_callback)
-    self.pub = rospy.Publisher('/sim_p3at/cmd_vel', Twist, queue_size=10)
+    # rospy.Subscriber('/sim_p3at/odom', Odometry, self.odometry_callback)
+    # self.pub = rospy.Publisher('/sim_p3at/cmd_vel', Twist, queue_size=10)
+    rospy.Subscriber('/RosAria/pose', Odometry, self.odometry_callback)
+    self.pub = rospy.Publisher('/RosAria/cmd_vel', Twist, queue_size=10)
 
   def get_yaw(self, odom_data):
         orientation = odom_data.pose.pose.orientation
