@@ -13,7 +13,7 @@ class PathFollowing(Sordalane):
 
     def run(self):
         for p in self.points:
-            (self.x_p, self.y_p, self.theta_p) = self.points[i]        
+            (self.x_p, self.y_p, self.theta_p) = p        
             while not rospy.is_shutdown():
                 self.refresh_position()
                 self.publish_velocities()
