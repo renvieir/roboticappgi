@@ -60,8 +60,8 @@ class Sordalane(ControlModel):
         return gama/(1.0 + abs(a));
 
     def refresh_position(self):
-        gama1 = 1.0
-        k = 1.0
+        gama1 = 0.5
+        k = 0.5
 
         self.err_x = self.x - self.x_p;
         self.err_y = self.y - self.y_p;

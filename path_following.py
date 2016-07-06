@@ -10,7 +10,7 @@ class PathFollowing(Sordalane):
         Sordalane.__init__(self,0,0,0)
     	print type(points)
         self.points = points
-        self.u_max = 0
+        self.u_max = 0.4
         self.raio = 0.2
 
     def run(self):
@@ -27,8 +27,8 @@ class PathFollowing(Sordalane):
             while not rospy.is_shutdown():
                 self.refresh_position()
 
-                if self.u_max < self.u:
-                    self.u_max = self.u
+                # if self.u_max < self.u:
+                #     self.u_max = self.u
 
                 if overload_velocity:
                     self.u = self.u_max
