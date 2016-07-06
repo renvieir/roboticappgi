@@ -10,11 +10,13 @@ if __name__ == '__main__':
     try:
         #ControlModel(1, 1).run()
 
-        points = [ (12,0,0), (14,1.5,pi/2), (14,9,pi/2), (14,9,-pi/2), (14,1.5,-pi/2),(12,0,pi),(0,0,pi)]
+        points = [  (3,0,0),(6,0,0),(9,0,0),(12,0,0),
+                    (14,1.5,pi/2), (14,5,pi/2), (14,9,pi/2), (14,9,-pi/2), (14,5,-pi/2), (14,1.5,-pi/2),
+                    (12,0,pi),(9,0,pi),(6,0,pi),(3,0,pi), (0,0,pi)]
+        # points = [ (1.2,1.2,0)]
 
         s = PathFollowing(points)
         s.run()
-
 
     except rospy.ROSInterruptException:
         pass

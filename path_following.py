@@ -10,15 +10,33 @@ class PathFollowing(Sordalane):
         Sordalane.__init__(self,0,0,0)
     	print type(points)
         self.points = points
+        self.u_max = 0
+        self.raio = 0.2
 
     def run(self):
-        i = 0
-        (self.x_p, self.y_p, self.theta_p) = self.points[i]        
-        while not rospy.is_shutdown():
-            self.refresh_position()
-            self.publish_velocities()
 
-            if len(self.points) > i and (fabs(self.err_x) < 0.02 and fabs(self.err_y) < 0.02):
-                i+=1
-                print self.points[i], self.err_x, self.err_y
-                (self.x_p, self.y_p, self.theta_p) = self.points[i]
+        last = self.points[-1]
+
+        for index, p in enumerate(self.points):
+            (self.x_p, self.y_p, self.theta_p) = p
+
+            overload_velocity = True
+            if p is last:
+                overload_velocity = False
+
+            while not rospy.is_shutdown():
+                self.refresh_position()
+
+                if self.u_max < self.u:
+                    self.u_max = self.u
+
+                if overload_velocity:
+                    self.u = self.u_max
+
+                self.publish_velocities()
+
+                if fabs(self.err_x) < self.raio and fabs(self.err_y) < self.raio:
+                    print 'end point'
+                    break
+
+        self.stop()
