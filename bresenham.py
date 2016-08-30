@@ -1,4 +1,4 @@
-class bresenham:
+class Bresenham:
 	def __init__(self, start, end):
 		self.start = list(start)
 		self.end = list(end)
@@ -55,20 +55,21 @@ class bresenham:
 	def swap(self,n1,n2):
 		return [n2,n1]
 
-l = bresenham([0,13],[13,1])
-print l.path
+if __name__ == "__main__":
+	l = Bresenham((0,13),(13,1))
+	print l.path
 
-map = []
-for x in range(0,15):
-	yc = []
-	for y in range(0,15):
-		yc.append('#')
-	map.append(yc)
-
-for pos in l.path:
-	map[pos[0]][pos[1]] = '.'
-	
-for y in range(0,15):
+	map = []
 	for x in range(0,15):
-		print map[x][y],
-	print
+		yc = []
+		for y in range(0,15):
+			yc.append('#')
+		map.append(yc)
+
+	for pos in l.path:
+		map[pos[0]][pos[1]] = '.'
+		
+	for y in range(0,15):
+		for x in range(0,15):
+			print map[x][y],
+		print

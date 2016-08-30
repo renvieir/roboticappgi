@@ -66,7 +66,8 @@ def print_laser_data(laser_data):
   print laser_data.range_min
   print laser_data.range_max
   print len(laser_data.ranges) 
- print '----------------'
+  print laser_data.ranges 
+  print '----------------'
 
 def prints(odom_data, laser_data):
   print_odom_data(odom_data)
