@@ -12,7 +12,7 @@ import math
 
 
 class OccupancyGridMap:
-    def __init__(self, m=100, n=100, apriori=0.5, angle_min=-2.35619449615, angle_max=2.35619449615):
+    def __init__(self, m=200, n=200, apriori=0.5, angle_min=-2.35619449615, angle_max=2.35619449615):
         """ 
             inicializa um array de tamanho fixo (m,n) com valores apriori para ser o mapa
             m e n sao as dimensoes do mapa
@@ -27,6 +27,10 @@ class OccupancyGridMap:
         self._angle_max = angle_max
 
         self.occupancy_map = np.full((m, n), apriori)
+
+        self.position_in_map = (m/2, n/2)
+        self.alpha = 10 # 1cm
+        self.beta = 28.6479 # 28.6479rad = 5graus
 
     def set_occ_map_cell(self, i, j):
         self.occupancy_map[i,j] = self._occ
@@ -49,9 +53,9 @@ class OccupancyGridMap:
         Measurement is a laser measure
         """
         'alpha=granularidade, ou tamanho que cada celula do mapa representa no mundo real'
-        alpha = 0.01 #1cm
+        alpha = self.alpha
         'beta=tamanho em angulo de cada beam'
-        beta = 28.6479 # 28.6479rad = 5graus
+        beta = self.beta
 
         x_i, y_i, = self.get_mass_center()'centro de massa das medidas em uma celula'
         x, y, theta = pose
@@ -78,18 +82,33 @@ class OccupancyGridMap:
         if r <= z_k_t:
             return l_free
 
-        raise Exception('No probability calculated')
-
+        raise Exception('No probability calculated')b
     def in_sensor_perceptual_field(self, nditer_index):
+
+        i = (nditer_index%m) - self.position_in_map[0]
+        j = (nditer_index/m) - self.position_in_map[1]
+
         theta = math.atan(j/i)
         return self.angle_min < theta < self.angle_max
 
     def get_mass_center(self):
-        return 0, 0
+        # identificar os beams que passam na celula
+        # fazer uma transformação do valor medido no beam pro indice da celula
+        return (0, 0)
 
     def get_theta_sens(self, pose, measurement):
         # pegar
         return []
+
+    def prob_lo(self):
+        return 0
+
+    def prob_locc(self):
+        return 0
+
+    def prob_lfree(self):
+        return 0
+
 
 if __name__ == '__main__':
     from listener import Robot
