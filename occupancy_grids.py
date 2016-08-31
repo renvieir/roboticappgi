@@ -29,10 +29,11 @@ class Polar:
 
 
 class LaserRead:
-    def __init__(self, polar=None, cartesian=None, matrix_index=None):
+    def __init__(self, polar=None, cartesian=None, matrix_index=None, path=None):
         self.polar = polar
         self.cartesian = cartesian
         self.matrix_index = matrix_index
+        self.path = path
 
 
 class OccupancyGridMap:
@@ -46,94 +47,86 @@ class OccupancyGridMap:
         self._n = n
         self._apriori = apriori
         self._occ = 0.99
-        self._free = 0.01
+        self._free = 1 - self._occ
         self._angle_min = angle_min
         self._angle_max = angle_max
 
-        self.occupancy_map = np.full((m, n), apriori)
+        # self.occupancy_map = np.full((m, n), apriori)
         # self.occupancy_map = [[[apriori]]*n]*m
+        self.occupancy_map = [[[0.5] for _ in range(0, m)] for _ in range(0, n)]
 
         self.position_in_map = Cartesian(m/2, n/2)
         self.alpha = 0.10 # 1cm in meters (granularidade)
         self.beta = 28.6479 # 28.6479rad = 5graus
 
     def set_occ_map_cell(self, i, j):
-        # self.occupancy_map[i][j] = [self._occ]
-        self.occupancy_map[i,j] = self._occ
+        self.occupancy_map[i][j] = [self._occ]
 
     def set_free_map_cell(self, i, j):
-        # self.occupancy_map[i][j] = [self._free]
-        self.occupancy_map[i,j] = self._free
+        self.occupancy_map[i][j] = [self._free]
 
     def map_cell_add_value(self, i, j, value):
-        # self.occupancy_map[i][j].append(value)
-        pass
+        self.occupancy_map[i][j].append(value)
 
     def print_map(self):
-        # map = []
-        # for line in self.occupancy_map:
-        #     l = []
-        #     for cell in line:
-        #         l.append(np.mean(cell))
-        #     print l
-        #     map.append(l)
 
-        # np.set_printoptions(threshold=np.inf)
-        # print self.occupancy_map
-        plt.matshow(self.occupancy_map, cmap=plt.cm.gray)
+        mapa = []
+        for line in self.occupancy_map:
+            linha = []
+            for cell in line:
+                if type(cell[0]) == list:
+                    linha.append(cell[0][0])
+                else:
+                    linha.append(cell[0])
+            # print linha
+            mapa.append(linha)
+
+        # mapa = [[cell[0] for cell in [line for line in self.occupancy_map]]
+        plt.matshow(mapa, cmap=plt.cm.gray)
         plt.show()
 
     def update_map(self, pose, laser_scan):
-        self.occupancy_map[self.position_in_map.x, self.position_in_map.y] = 0.75
+        # pinta a posicao do robo
+        self.set_occ_map_cell(self.position_in_map.x, self.position_in_map.y)
 
         # 1. pega o vetor com as leituras e adiciona o informações de onde na matriz deve estar essa leitura
         laser_data = self.get_cartesian_and_matrix_index(self.convert_to_polar(laser_scan))
-
         # self.print_map()
-        # return
+
         # 2. pra cada medida adiciona na matriz o raytrace (usando bresenham)
-        #lasers_path = []
-
-
         for ld in laser_data:
-
-
             start = self.position_in_map
             end = ld.matrix_index
             path = Bresenham((start.x, start.y), (end.x, end.y)).path
+            # ld.path = path
 
-            # print path
-            # print type(path)
-            #lasers_path.append((ld, path))
+            for p in path:
+                l = self.occupancy_map[p[0]][p[1]][0]
+                if type(l) == list:
+                    l.append(self._free)
+                else:
+                    self.occupancy_map[p[0]][p[1]][0] = [l, self._free]
 
-            # marca como livre todo caminho antes do ponto
-            for p in path[:-1]:
-                self.set_free_map_cell(p[0], p[1])
 
-            # adiciona o ponto na celula
-            self.set_occ_map_cell(end.x, end.y)
-        self.print_map()
-        return
-
+        # self.print_map()
         # 3. percorre a matriz e calcula as probabilidades
         for i in range(0, self._m):
             for j in range(0, self._n):
-                if self.in_sensor_perceptual_field(self.occupancy_map[i][j]):
-                    # atualiza valor
-                    # nesse caso a celula eh um vetor mas quando calcula a probabilidade fica apenas ela
-                    self.occupancy_map[i][j] = \
-                        [self.inverse_range_sensor_model(self.occupancy_map[i][j], pose)]
+
+                l = self.occupancy_map[i][j][0]
+                self.occupancy_map[i][j][0] = np.mean(l)
+
+                # if self.in_sensor_perceptual_field(self.occupancy_map[i][j]):
+                #     # atualiza valor
+                #     # nesse caso a celula eh um vetor mas quando calcula a probabilidade fica apenas ela
+                #     self.occupancy_map[i][j] = \
+                #         [self.inverse_range_sensor_model(self.occupancy_map[i][j], pose)]
 
 
         self.print_map()
-        """
-        map_iter = np.nditer(self.occupancy_map, op_flags=['readwrite'], flags=['f_index'])
-        while not map_iter.finished:
-            if in_sensor_perceptual_field(map_iter):
-                # atualiza valor
-                map_iter[0] = inverse_range_sensor_model(map_iter, pose, laser_scan)
-            map_iter.iternext()
-        """
+        return
+
+
     def inverse_range_sensor_model(self, map_cell, pose):
         """
         Map_cell is a numpy.nditer element
@@ -208,12 +201,9 @@ class OccupancyGridMap:
     def get_cartesian_and_matrix_index(self, laser_read):
         for lr in laser_read:        
             theta = lr.polar.angle
-            r = lr.polar.distance
+            range = lr.polar.distance
 
-            x = math.cos(theta)*r
-            y = math.sin(theta)*r
-
-            cartesian = Cartesian(x, y)
+            cartesian = Cartesian(math.cos(theta)*range, math.sin(theta)*range)
  
             i = self.position_in_map.x + cartesian.x/self.alpha
             j = self.position_in_map.y + cartesian.y/self.alpha
@@ -221,7 +211,8 @@ class OccupancyGridMap:
             lr.cartesian = cartesian
             lr.matrix_index = Cartesian(int(i), int(j))
 
-            self.occupancy_map[int(i),int(j)] = 1.0
+            # coloca 1 onde tem uma leitura
+            self.set_occ_map_cell(int(i), int(j))
 
         return laser_read
 
@@ -235,15 +226,6 @@ class OccupancyGridMap:
                         angle=(origin + i*increment)
                         )
                     ) for i, m in enumerate(laser_scan.ranges)]
-
-        # new = []
-        # for i, m in enumerate(laser_scan.ranges):
-        #     polar = Polar(distance=m, angle=(origin + i*increment))
-        #     new.append(LaserRead(polar=polar))
-        #
-        #     print polar.distance, ' <-> ', polar.angle
-        # print new[0].polar.angle, ' to ', new[-1].polar.angle
-        # return new
 
     def prob_lo(self, cell):
         return cell[0]
