@@ -1,0 +1,12 @@
+<launch>
+    <!-- Inicializa o robo -->
+    <include file="$(find roboticappgi)/launch/pioneer_setup.launch" />
+
+    <!-- Inicia o mapeamento -->
+    <include file="$(find gmapping)/launch/pioneer_mapping.launch" />
+
+    <!-- 
+    <include file="$(find hector_mapping)/launch/mapping_pioneer.launch"  />
+    <node pkg="tf" type="static_transform_publisher" name="map_to_odom" args="0 0 0 0 0 0 /map /odom 100" />
+    -->
+</launch>

@@ -1,0 +1,10 @@
+<launch>
+    <!-- Inicializa o robo -->
+    <include file="$(find roboticappgi)/launch/pioneer_setup_serial.launch" />
+
+    <!-- Inicia map server-->
+    <node pkg="map_server" name="map_server" type="map_server" args="/home/labvcr2/Imagens/icomp/icomp.yaml"/>
+
+    <!-- Inicia amcl -->
+    <include file="$(find amcl)/examples/pioneer.launch"/>    
+</launch>

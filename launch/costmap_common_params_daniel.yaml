@@ -1,0 +1,6 @@
+obstacle_range: 2.5 # distancia pra comecar a detectar obstaculos
+raytrace_range: 3.0 # alcance do raio do laser
+inflation_radius: 0.55 # raio da erosao
+footprint: [ [-10, 0], [-10, 0], [10, -10], [10, 10], [-10, 10] ]
+observation_sources: LMS1xx_node
+laser_scan_sensor: {sensor_frame: map, data_type: LaserScan, topic: scan, marking: true, clearing: true}

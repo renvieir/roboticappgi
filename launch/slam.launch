@@ -1,0 +1,8 @@
+<launch>
+
+    <!-- Inicia Mapamento -->
+    <!-- <include file="$(find roboticappgi)/launch/mapping.launch"/> -->
+
+    <!-- Inicia Navegação -->
+    <!-- <include file="$(find roboticappgi)/launch/navigation.launch"/> -->
+</launch>

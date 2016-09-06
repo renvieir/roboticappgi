@@ -1,0 +1,26 @@
+<launch>
+
+    <!-- Inicia Mapa -->
+    <!-- <include file="$(find roboticappgi)/launch/localization.launch"/> -->
+
+    <include file="$(find amcl)/examples/pioneer.launch"/>
+        
+
+    <!-- Inicia move_base-->
+    <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
+
+        <remap from="/odom" to="/RosAria/pose" />
+        <remap from="cmd_vel" to="/RosAria/cmd_vel" />    
+        
+        <rosparam file="$(find roboticappgi)/launch/costmap_common_params_p3at.yaml" command="load"
+                  ns="global_costmap" />
+        <rosparam file="$(find roboticappgi)/launch/costmap_common_params_p3at.yaml" command="load"
+                  ns="local_costmap" />
+        <rosparam file="$(find roboticappgi)/launch/local_costmap_params.yaml" command="load" />
+        <rosparam file="$(find roboticappgi)/launch/global_costmap_params.yaml" command="load" />
+        <rosparam file="$(find roboticappgi)/launch/base_local_planner_params.yaml" command="load"
+                  ns="TrajectoryPlannerROS"/>
+        <param name="base_global_planner" value="voronoi_planner/VoronoiPlanner"/>                  
+        <param name="controller_frequency" value="6.0" /> 
+    </node>
+</launch>

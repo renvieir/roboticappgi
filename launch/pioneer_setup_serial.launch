@@ -1,0 +1,14 @@
+<launch>
+    <!-- Inicia o Rosaria pelo cabo serial -->
+    <include file="$(find rosaria)/launch/serial.launch"  />
+
+    <!-- Inicia o Rosaria pelo wifi do Wall-E -->
+    <!-- <include file="$(find rosaria)/launch/walle.launch"  />-->
+
+    <!-- Publica transformação do laser pro base -->
+    <node pkg="tf" type="static_transform_publisher"
+          name="base_to_laser_broadcaster" args="0.25 0 0.13 0 0 0 base_link base_scan 20" />
+
+    <!-- Inicia Laser-->
+    <include file="$(find lms1xx)/launch/pioneer_laser.launch"  />
+</launch>
