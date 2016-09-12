@@ -17,23 +17,9 @@ from sensor_msgs.msg import LaserScan
 
 
 class Cartesian:
-    def __init__(self, a, b):
-        self.x = a
-        self.y = b
-
-
-class Polar:
-    def __init__(self, distance, angle):
-        self.distance = distance
-        self.angle = angle
-
-
-class LaserRead:
-    def __init__(self, polar=None, cartesian=None, matrix_index=None, path=None):
-        self.polar = polar
-        self.cartesian = cartesian
-        self.matrix_index = matrix_index
-        self.path = path
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
 
 
 class OccupancyGridMap:
@@ -52,11 +38,10 @@ class OccupancyGridMap:
         self._angle_max = angle_max
 
         # self.occupancy_map = np.full((m, n), apriori)
-        # self.occupancy_map = [[[apriori]]*n]*m
         self.occupancy_map = [[[0.5] for _ in range(0, m)] for _ in range(0, n)]
 
         self.position_in_map = Cartesian(m/2, n/2)
-        self.alpha = 0.10 # 1cm in meters (granularidade)
+        self.granularity = 0.10 # 1cm in meters (granularidade)
         self.beta = 28.6479 # 28.6479rad = 5graus
 
     def set_occ_map_cell(self, i, j):
@@ -86,146 +71,63 @@ class OccupancyGridMap:
         plt.show()
 
     def update_map(self, pose, laser_scan):
-        # pinta a posicao do robo
+        # pinta a posicao do robo no mapa
         self.set_occ_map_cell(self.position_in_map.x, self.position_in_map.y)
 
-        # 1. pega o vetor com as leituras e adiciona o informações de onde na matriz deve estar essa leitura
-        laser_data = self.get_cartesian_and_matrix_index(self.convert_to_polar(laser_scan))
-        # self.print_map()
+        # pega as leituras, coloca na sua posição no mapa e seta o caminho como livre
+        self.process_data_to_map(laser_scan, pose)
 
-        # 2. pra cada medida adiciona na matriz o raytrace (usando bresenham)
-        for ld in laser_data:
+        # self.print_map()
+        # 3. percorre a matriz e calcula as probabilidades
+        for i in range(0, self._m):
+            for j in range(0, self._n):
+                l = self.occupancy_map[i][j][0]
+                self.occupancy_map[i][j][0] = np.mean(l)
+
+        self.print_map()
+
+    def process_data_to_map(self, laser_scan, pose):
+        """
+        Process laser readings and transform it to positions on grid map
+        :param laser_scan: data read from Laser
+        :param pose: Robot pose
+        :return:
+        """
+        origin = laser_scan.angle_min
+        increment = laser_scan.angle_increment
+
+        for i, m in enumerate(laser_scan.ranges):
+
+            # convert this laser reading to polar coordinate
+            distance=m
+            angle=origin + i*increment
+
+            # get world coordinate of this laser reading and transform to matrix index
+            x=math.cos(angle)*distance
+            y=math.sin(angle)*distance
+
+            i = int(self.position_in_map.x + x/self.granularity)
+            j = int(self.position_in_map.y + y/self.granularity)
+
+            matrix_index = Cartesian(i, j)
+
+            # get path from robot position to each point on laser
             start = self.position_in_map
-            end = ld.matrix_index
+            end = matrix_index
             path = Bresenham((start.x, start.y), (end.x, end.y)).path
             # ld.path = path
 
-            for p in path:
+            # set each point, but the last, on path to free
+            for p in path[:-1]:
                 l = self.occupancy_map[p[0]][p[1]][0]
                 if type(l) == list:
                     l.append(self._free)
                 else:
                     self.occupancy_map[p[0]][p[1]][0] = [l, self._free]
 
-
-        # self.print_map()
-        # 3. percorre a matriz e calcula as probabilidades
-        for i in range(0, self._m):
-            for j in range(0, self._n):
-
-                l = self.occupancy_map[i][j][0]
-                self.occupancy_map[i][j][0] = np.mean(l)
-
-                # if self.in_sensor_perceptual_field(self.occupancy_map[i][j]):
-                #     # atualiza valor
-                #     # nesse caso a celula eh um vetor mas quando calcula a probabilidade fica apenas ela
-                #     self.occupancy_map[i][j] = \
-                #         [self.inverse_range_sensor_model(self.occupancy_map[i][j], pose)]
-
-
-        self.print_map()
-        return
-
-
-    def inverse_range_sensor_model(self, map_cell, pose):
-        """
-        Map_cell is a numpy.nditer element
-        Pose is a (x, y, theta) tuple
-        Measurement is a laser measure
-        """
-        #'alpha=granularidade, ou tamanho que cada celula do mapa representa no mundo real'
-        alpha = self.alpha
-        #'beta=tamanho em angulo de cada beam'
-        beta = self.beta
-
-        x_i, y_i, = self.get_mass_center(map_cell) #'centro de massa das medidas em uma celula'
-        x, y, theta = pose
-        r = math.sqrt( (x_i -x)**2 + (y_i - y)**2 )
-        # arco tangente retorna o angulo do centro de massa, phi eh o resultado da
-        # diferenca entre o angulo de ponto de massa e o angulo do robo
-        phi = math.atan2(y_i - y, x_i - x) - theta 
- 
-        #theta_sense eh 'o conjunto de feixes que atinge o ponto representado pela celula'
-        theta_sens = self.get_theta_sens(map_cell)
-        # dentro do angulo phi existem varios feixes, k eh o indice do feixe mais proximo do ponto de centro de massa
-        k = np.argmin(np.subtract(phi, theta_sens)) # essa subtracao tem que ser feita element wise
-
-        z_max = 20 # maior medida considerada no mapa TODO: pegar do laser
-        z_k_t = map_cell[k+1].polar.distance #'MEDIDA_CORRESPONDENTE_A_CELULA_DO_MAPA'
-        theta_k_sens = map_cell[k+1].polar.angle #'ANGULO_DA_MEDIDA'
-
-        if (r > min(z_max, z_k_t + (alpha/2))) or ((phi -theta_k_sens) > beta/2):
-            return self.prob_lo(map_cell)
-        
-        if (z_k_t < z_max) and (math.fabs(r - z_k_t) < alpha/2):
-            return self.prob_locc(map_cell)
-        
-        if r <= z_k_t:
-            return self.prob_lfree(map_cell)
-
-        raise Exception('No probability calculated')
-
-    def in_sensor_perceptual_field(self, map_cell):
-        # como jah fizemos uma atualizacao antes, 
-        # se tem apenas o apriori eh pq tah fora do raio        
-
-        if len(map_cell)>1:
-            return True
-        return False
-
-        # i = (nditer_index%m) - self.position_in_map.x
-        # j = (nditer_index/m) - self.position_in_map.y
-        #
-        # theta = math.atan(j/i)
-        # return self.angle_min < theta < self.angle_max
-
-    def get_mass_center(self, map_cell):
-        # identificar os beams que passam na celula
-        # fazer uma transformação do valor medido no beam pro indice da celula
-
-        xs = []
-        ys = []
-
-        # vai do segundo ponto no vetor pq o primeiro eh o apriori
-        for mc in map_cell[1:]:
-            xs.append(mc.cartesian.x)
-            ys.append(mc.cartesian.y)
-
-        #return Position(np.mean(xs), np.mean(ys))
-        return (np.mean(xs), np.mean(ys))
-
-    def get_theta_sens(self, map_cell):
-        # vai do segundo ponto no vetor pq o primeiro eh o apriori
-        return [mc.polar.angle for mc in map_cell[1:]]
-
-    def get_cartesian_and_matrix_index(self, laser_read):
-        for lr in laser_read:        
-            theta = lr.polar.angle
-            range = lr.polar.distance
-
-            cartesian = Cartesian(math.cos(theta)*range, math.sin(theta)*range)
- 
-            i = self.position_in_map.x + cartesian.x/self.alpha
-            j = self.position_in_map.y + cartesian.y/self.alpha
-
-            lr.cartesian = cartesian
-            lr.matrix_index = Cartesian(int(i), int(j))
-
+            # set the position for this laser reading as occupied
             # coloca 1 onde tem uma leitura
-            self.set_occ_map_cell(int(i), int(j))
-
-        return laser_read
-
-    def convert_to_polar(self, laser_scan):
-        origin = laser_scan.angle_min
-        increment = laser_scan.angle_increment
-
-        return [LaserRead(
-                    polar=Polar(
-                        distance=m,
-                        angle=(origin + i*increment)
-                        )
-                    ) for i, m in enumerate(laser_scan.ranges)]
+            self.map_cell_add_value(i,j,self._occ)
 
     def prob_lo(self, cell):
         return cell[0]
