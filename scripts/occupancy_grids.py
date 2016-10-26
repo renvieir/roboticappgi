@@ -125,7 +125,7 @@ class OccupancyGridMap:
 
 
 if __name__ == '__main__':
-    from listener import Robot
+    from robots import Robot
 
     robot = Robot()
     ogm = OccupancyGridMap()
