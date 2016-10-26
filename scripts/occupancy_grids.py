@@ -53,7 +53,19 @@ class OccupancyGridMap:
         self.occupancy_map[i][j] = [self._free]
 
     def map_cell_add_value(self, i, j, value):
+        i, j = self.validate_indexes(i, j)           
         self.occupancy_map[i][j].append(value)
+
+    def validate_indexes(self, i, j):
+        if i>=self._m:
+            i = self._m -1
+        if j>=self._n:
+            j = self._n -1    
+        if i < 0:
+            i=0
+        if j<0:
+            j=0
+        return i, j
 
     def print_map(self):
         ocmap = []
@@ -117,8 +129,7 @@ class OccupancyGridMap:
 
             # set each point, but the last, on path to free
             for p in path[:-1]:
-                l = self.occupancy_map[p[0]][p[1]]
-                l.append(self._free)
+                self.map_cell_add_value(p[0], p[1], self._free)
 
             # set the position for this laser reading as occupied
             # coloca 1 onde tem uma leitura
